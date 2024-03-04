@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package desposiblerequest
+package disposiblerequest
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/crossplane-contrib/provider-http/apis/desposiblerequest/v1alpha1"
+	"github.com/crossplane-contrib/provider-http/apis/disposiblerequest/v1alpha1"
 
 	httpClient "github.com/crossplane-contrib/provider-http/internal/clients/http"
 	"github.com/crossplane-contrib/provider-http/internal/utils"
@@ -51,7 +51,7 @@ var (
 
 const (
 	providerName              = "http-test"
-	testDesposibleRequestName = "test-request"
+	testDisposibleRequestName = "test-request"
 	testNamespace             = "testns"
 )
 
@@ -72,21 +72,21 @@ const (
 	testBody   = "{\"key1\": \"value1\"}"
 )
 
-type httpDesposibleRequestModifier func(request *v1alpha1.DesposibleRequest)
+type httpDisposibleRequestModifier func(request *v1alpha1.DisposibleRequest)
 
-func httpDesposibleRequest(rm ...httpDesposibleRequestModifier) *v1alpha1.DesposibleRequest {
-	r := &v1alpha1.DesposibleRequest{
+func httpDisposibleRequest(rm ...httpDisposibleRequestModifier) *v1alpha1.DisposibleRequest {
+	r := &v1alpha1.DisposibleRequest{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      testDesposibleRequestName,
+			Name:      testDisposibleRequestName,
 			Namespace: testNamespace,
 		},
-		Spec: v1alpha1.DesposibleRequestSpec{
+		Spec: v1alpha1.DisposibleRequestSpec{
 			ResourceSpec: xpv1.ResourceSpec{
 				ProviderConfigReference: &xpv1.Reference{
 					Name: providerName,
 				},
 			},
-			ForProvider: v1alpha1.DesposibleRequestParameters{
+			ForProvider: v1alpha1.DisposibleRequestParameters{
 				URL:         testURL,
 				Method:      testMethod,
 				Headers:     testHeaders,
@@ -94,7 +94,7 @@ func httpDesposibleRequest(rm ...httpDesposibleRequestModifier) *v1alpha1.Despos
 				WaitTimeout: testTimeout,
 			},
 		},
-		Status: v1alpha1.DesposibleRequestStatus{},
+		Status: v1alpha1.DisposibleRequestStatus{},
 	}
 
 	for _, m := range rm {
@@ -114,7 +114,7 @@ func (c *MockHttpClient) SendRequest(ctx context.Context, method string, url str
 	return c.MockSendRequest(ctx, method, url, body, headers, skipTLSVerify)
 }
 
-type notHttpDesposibleRequest struct {
+type notHttpDisposibleRequest struct {
 	resource.Managed
 }
 
@@ -133,15 +133,15 @@ func Test_httpExternal_Create(t *testing.T) {
 		args args
 		want want
 	}{
-		"NotDesposibleRequestResource": {
+		"NotDisposibleRequestResource": {
 			args: args{
-				mg: notHttpDesposibleRequest{},
+				mg: notHttpDisposibleRequest{},
 			},
 			want: want{
-				err: errors.New(errNotDesposibleRequest),
+				err: errors.New(errNotDisposibleRequest),
 			},
 		},
-		"DesposibleRequestFailed": {
+		"DisposibleRequestFailed": {
 			args: args{
 				http: &MockHttpClient{
 					MockSendRequest: func(ctx context.Context, method string, url string, body string, headers map[string][]string, skipTLSVerify bool) (resp httpClient.HttpDetails, err error) {
@@ -152,11 +152,11 @@ func Test_httpExternal_Create(t *testing.T) {
 					MockStatusUpdate: test.NewMockSubResourceUpdateFn(nil),
 					MockGet:          test.NewMockGetFn(nil),
 				},
-				mg: httpDesposibleRequest(),
+				mg: httpDisposibleRequest(),
 			},
 			want: want{
 				failuresIndex: 1,
-				err:           errors.Wrap(errBoom, errFailedToSendHttpDesposibleRequest),
+				err:           errors.Wrap(errBoom, errFailedToSendHttpDisposibleRequest),
 			},
 		},
 		"Success": {
@@ -171,7 +171,7 @@ func Test_httpExternal_Create(t *testing.T) {
 					MockCreate:       test.NewMockCreateFn(nil),
 					MockGet:          test.NewMockGetFn(nil),
 				},
-				mg: httpDesposibleRequest(),
+				mg: httpDisposibleRequest(),
 			},
 			want: want{
 				err: nil,
@@ -209,15 +209,15 @@ func Test_httpExternal_Update(t *testing.T) {
 		args args
 		want want
 	}{
-		"NotDesposibleRequestResource": {
+		"NotDisposibleRequestResource": {
 			args: args{
-				mg: notHttpDesposibleRequest{},
+				mg: notHttpDisposibleRequest{},
 			},
 			want: want{
-				err: errors.New(errNotDesposibleRequest),
+				err: errors.New(errNotDisposibleRequest),
 			},
 		},
-		"DesposibleRequestFailed": {
+		"DisposibleRequestFailed": {
 			args: args{
 				http: &MockHttpClient{
 					MockSendRequest: func(ctx context.Context, method string, url string, body string, headers map[string][]string, skipTLSVerify bool) (resp httpClient.HttpDetails, err error) {
@@ -228,10 +228,10 @@ func Test_httpExternal_Update(t *testing.T) {
 					MockStatusUpdate: test.NewMockSubResourceUpdateFn(nil),
 					MockGet:          test.NewMockGetFn(nil),
 				},
-				mg: httpDesposibleRequest(),
+				mg: httpDisposibleRequest(),
 			},
 			want: want{
-				err: errors.Wrap(errBoom, errFailedToSendHttpDesposibleRequest),
+				err: errors.Wrap(errBoom, errFailedToSendHttpDisposibleRequest),
 			},
 		},
 		"Success": {
@@ -246,7 +246,7 @@ func Test_httpExternal_Update(t *testing.T) {
 					MockCreate:       test.NewMockCreateFn(nil),
 					MockGet:          test.NewMockGetFn(nil),
 				},
-				mg: httpDesposibleRequest(),
+				mg: httpDisposibleRequest(),
 			},
 			want: want{
 				err: nil,
@@ -271,7 +271,7 @@ func Test_httpExternal_Update(t *testing.T) {
 
 func Test_deployAction(t *testing.T) {
 	type args struct {
-		cr        *v1alpha1.DesposibleRequest
+		cr        *v1alpha1.DisposibleRequest
 		http      httpClient.Client
 		localKube client.Client
 	}
@@ -299,16 +299,16 @@ func Test_deployAction(t *testing.T) {
 					MockStatusUpdate: test.NewMockSubResourceUpdateFn(nil),
 					MockGet:          test.NewMockGetFn(nil),
 				},
-				cr: &v1alpha1.DesposibleRequest{
-					Spec: v1alpha1.DesposibleRequestSpec{
-						ForProvider: v1alpha1.DesposibleRequestParameters{
+				cr: &v1alpha1.DisposibleRequest{
+					Spec: v1alpha1.DisposibleRequestSpec{
+						ForProvider: v1alpha1.DisposibleRequestParameters{
 							URL:     "invalid-url",
 							Method:  testMethod,
 							Headers: testHeaders,
 							Body:    testBody,
 						},
 					},
-					Status: v1alpha1.DesposibleRequestStatus{},
+					Status: v1alpha1.DisposibleRequestStatus{},
 				},
 			},
 			want: want{
@@ -333,16 +333,16 @@ func Test_deployAction(t *testing.T) {
 					MockStatusUpdate: test.NewMockSubResourceUpdateFn(nil),
 					MockGet:          test.NewMockGetFn(nil),
 				},
-				cr: &v1alpha1.DesposibleRequest{
-					Spec: v1alpha1.DesposibleRequestSpec{
-						ForProvider: v1alpha1.DesposibleRequestParameters{
+				cr: &v1alpha1.DisposibleRequest{
+					Spec: v1alpha1.DisposibleRequestSpec{
+						ForProvider: v1alpha1.DisposibleRequestParameters{
 							URL:     testURL,
 							Method:  testMethod,
 							Headers: testHeaders,
 							Body:    testBody,
 						},
 					},
-					Status: v1alpha1.DesposibleRequestStatus{},
+					Status: v1alpha1.DisposibleRequestStatus{},
 				},
 			},
 			want: want{
@@ -371,16 +371,16 @@ func Test_deployAction(t *testing.T) {
 					MockStatusUpdate: test.NewMockSubResourceUpdateFn(nil),
 					MockGet:          test.NewMockGetFn(nil),
 				},
-				cr: &v1alpha1.DesposibleRequest{
-					Spec: v1alpha1.DesposibleRequestSpec{
-						ForProvider: v1alpha1.DesposibleRequestParameters{
+				cr: &v1alpha1.DisposibleRequest{
+					Spec: v1alpha1.DisposibleRequestSpec{
+						ForProvider: v1alpha1.DisposibleRequestParameters{
 							URL:     testURL,
 							Method:  testMethod,
 							Headers: testHeaders,
 							Body:    testBody,
 						},
 					},
-					Status: v1alpha1.DesposibleRequestStatus{},
+					Status: v1alpha1.DisposibleRequestStatus{},
 				},
 			},
 			want: want{

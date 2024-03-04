@@ -25,8 +25,8 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
-// DesposibleRequestParameters are the configurable fields of a DesposibleRequest.
-type DesposibleRequestParameters struct {
+// DisposibleRequestParameters are the configurable fields of a DisposibleRequest.
+type DisposibleRequestParameters struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Field 'forProvider.url' is immutable"
 	URL string `json:"url"`
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Field 'forProvider.method' is immutable"
@@ -50,11 +50,11 @@ type DesposibleRequestParameters struct {
 	ExpectedResponse string `json:"expectedResponse,omitempty"`
 }
 
-// A DesposibleRequestSpec defines the desired state of a DesposibleRequest.
-type DesposibleRequestSpec struct {
+// A DisposibleRequestSpec defines the desired state of a DisposibleRequest.
+type DisposibleRequestSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
 
-	ForProvider DesposibleRequestParameters `json:"forProvider"`
+	ForProvider DisposibleRequestParameters `json:"forProvider"`
 }
 
 type Response struct {
@@ -70,8 +70,8 @@ type Mapping struct {
 	Headers map[string][]string `json:"headers,omitempty"`
 }
 
-// A DesposibleRequestStatus represents the observed state of a DesposibleRequest.
-type DesposibleRequestStatus struct {
+// A DisposibleRequestStatus represents the observed state of a DisposibleRequest.
+type DisposibleRequestStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
 	Response            Response `json:"response,omitempty"`
 	Failed              int32    `json:"failed,omitempty"`
@@ -82,38 +82,38 @@ type DesposibleRequestStatus struct {
 
 // +kubebuilder:object:root=true
 
-// A DesposibleRequest is an example API type.
+// A DisposibleRequest is an example API type.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,http}
-type DesposibleRequest struct {
+type DisposibleRequest struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DesposibleRequestSpec   `json:"spec"`
-	Status DesposibleRequestStatus `json:"status,omitempty"`
+	Spec   DisposibleRequestSpec   `json:"spec"`
+	Status DisposibleRequestStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// DesposibleRequestList contains a list of DesposibleRequest
-type DesposibleRequestList struct {
+// DisposibleRequestList contains a list of DisposibleRequest
+type DisposibleRequestList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []DesposibleRequest `json:"items"`
+	Items           []DisposibleRequest `json:"items"`
 }
 
-// DesposibleRequest type metadata.
+// DisposibleRequest type metadata.
 var (
-	DesposibleRequestKind             = reflect.TypeOf(DesposibleRequest{}).Name()
-	DesposibleRequestGroupKind        = schema.GroupKind{Group: Group, Kind: DesposibleRequestKind}.String()
-	DesposibleRequestKindAPIVersion   = DesposibleRequestKind + "." + SchemeGroupVersion.String()
-	DesposibleRequestGroupVersionKind = SchemeGroupVersion.WithKind(DesposibleRequestKind)
+	DisposibleRequestKind             = reflect.TypeOf(DisposibleRequest{}).Name()
+	DisposibleRequestGroupKind        = schema.GroupKind{Group: Group, Kind: DisposibleRequestKind}.String()
+	DisposibleRequestKindAPIVersion   = DisposibleRequestKind + "." + SchemeGroupVersion.String()
+	DisposibleRequestGroupVersionKind = SchemeGroupVersion.WithKind(DisposibleRequestKind)
 )
 
 func init() {
-	SchemeBuilder.Register(&DesposibleRequest{}, &DesposibleRequestList{})
+	SchemeBuilder.Register(&DisposibleRequest{}, &DisposibleRequestList{})
 }

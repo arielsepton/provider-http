@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package desposiblerequest
+package disposiblerequest
 
 import (
 	"context"
@@ -37,29 +37,29 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
-	"github.com/crossplane-contrib/provider-http/apis/desposiblerequest/v1alpha1"
+	"github.com/crossplane-contrib/provider-http/apis/disposiblerequest/v1alpha1"
 	apisv1alpha1 "github.com/crossplane-contrib/provider-http/apis/v1alpha1"
 	httpClient "github.com/crossplane-contrib/provider-http/internal/clients/http"
 	"github.com/crossplane-contrib/provider-http/internal/utils"
 )
 
 const (
-	errNotDesposibleRequest              = "managed resource is not a DesposibleRequest custom resource"
+	errNotDisposibleRequest              = "managed resource is not a DisposibleRequest custom resource"
 	errTrackPCUsage                      = "cannot track ProviderConfig usage"
 	errNewHttpClient                     = "cannot create new Http client"
 	errProviderNotRetrieved              = "provider could not be retrieved"
-	errFailedToSendHttpDesposibleRequest = "failed to send http request"
+	errFailedToSendHttpDisposibleRequest = "failed to send http request"
 	errFailedUpdateStatusConditions      = "failed updating status conditions"
 	ErrExpectedFormat                    = "JQ filter should return a boolean, but returned error: %s"
 )
 
-// Setup adds a controller that reconciles DesposibleRequest managed resources.
+// Setup adds a controller that reconciles DisposibleRequest managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options, timeout time.Duration) error {
-	name := managed.ControllerName(v1alpha1.DesposibleRequestGroupKind)
+	name := managed.ControllerName(v1alpha1.DisposibleRequestGroupKind)
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.DesposibleRequestGroupVersionKind),
+		resource.ManagedKind(v1alpha1.DisposibleRequestGroupVersionKind),
 		managed.WithExternalConnecter(&connector{
 			logger:          o.Logger,
 			kube:            mgr.GetClient(),
@@ -76,7 +76,7 @@ func Setup(mgr ctrl.Manager, o controller.Options, timeout time.Duration) error 
 		Named(name).
 		WithOptions(o.ForControllerRuntime()).
 		WithEventFilter(resource.DesiredStateChanged()).
-		For(&v1alpha1.DesposibleRequest{}).
+		For(&v1alpha1.DisposibleRequest{}).
 		Complete(ratelimiter.NewReconciler(name, r, o.GlobalRateLimiter))
 }
 
@@ -88,12 +88,12 @@ type connector struct {
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	cr, ok := mg.(*v1alpha1.DesposibleRequest)
+	cr, ok := mg.(*v1alpha1.DisposibleRequest)
 	if !ok {
-		return nil, errors.New(errNotDesposibleRequest)
+		return nil, errors.New(errNotDisposibleRequest)
 	}
 
-	l := c.logger.WithValues("desposibleRequest", cr.Name)
+	l := c.logger.WithValues("disposibleRequest", cr.Name)
 
 	if err := c.usage.Track(ctx, mg); err != nil {
 		return nil, errors.Wrap(err, errTrackPCUsage)
@@ -124,9 +124,9 @@ type external struct {
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.DesposibleRequest)
+	cr, ok := mg.(*v1alpha1.DisposibleRequest)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotDesposibleRequest)
+		return managed.ExternalObservation{}, errors.New(errNotDisposibleRequest)
 	}
 
 	if !cr.Status.Synced {
@@ -152,7 +152,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}, nil
 }
 
-func (c *external) deployAction(ctx context.Context, cr *v1alpha1.DesposibleRequest) error {
+func (c *external) deployAction(ctx context.Context, cr *v1alpha1.DisposibleRequest) error {
 	details, err := c.http.SendRequest(ctx, cr.Spec.ForProvider.Method,
 		cr.Spec.ForProvider.URL, cr.Spec.ForProvider.Body, cr.Spec.ForProvider.Headers, cr.Spec.ForProvider.InsecureSkipTLSVerify)
 
@@ -200,7 +200,7 @@ func (c *external) deployAction(ctx context.Context, cr *v1alpha1.DesposibleRequ
 	return utils.SetRequestResourceStatus(*resource, resource.SetStatusCode(), resource.SetHeaders(), resource.SetBody(), resource.SetSynced(), resource.SetRequestDetails())
 }
 
-func (c *external) isResponseAsExpected(cr *v1alpha1.DesposibleRequest, res httpClient.HttpResponse) (bool, error) {
+func (c *external) isResponseAsExpected(cr *v1alpha1.DisposibleRequest, res httpClient.HttpResponse) (bool, error) {
 	// If no expected response is defined, consider it as expected.
 	if cr.Spec.ForProvider.ExpectedResponse == "" {
 		return true, nil
@@ -226,29 +226,29 @@ func (c *external) isResponseAsExpected(cr *v1alpha1.DesposibleRequest, res http
 }
 
 func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.DesposibleRequest)
+	cr, ok := mg.(*v1alpha1.DisposibleRequest)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotDesposibleRequest)
+		return managed.ExternalCreation{}, errors.New(errNotDisposibleRequest)
 	}
 
 	if err := utils.IsRequestValid(cr.Spec.ForProvider.Method, cr.Spec.ForProvider.URL); err != nil {
 		return managed.ExternalCreation{}, err
 	}
 
-	return managed.ExternalCreation{}, errors.Wrap(c.deployAction(ctx, cr), errFailedToSendHttpDesposibleRequest)
+	return managed.ExternalCreation{}, errors.Wrap(c.deployAction(ctx, cr), errFailedToSendHttpDisposibleRequest)
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*v1alpha1.DesposibleRequest)
+	cr, ok := mg.(*v1alpha1.DisposibleRequest)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotDesposibleRequest)
+		return managed.ExternalUpdate{}, errors.New(errNotDisposibleRequest)
 	}
 
 	if err := utils.IsRequestValid(cr.Spec.ForProvider.Method, cr.Spec.ForProvider.URL); err != nil {
 		return managed.ExternalUpdate{}, err
 	}
 
-	return managed.ExternalUpdate{}, errors.Wrap(c.deployAction(ctx, cr), errFailedToSendHttpDesposibleRequest)
+	return managed.ExternalUpdate{}, errors.Wrap(c.deployAction(ctx, cr), errFailedToSendHttpDisposibleRequest)
 }
 
 func (c *external) Delete(_ context.Context, _ resource.Managed) error {

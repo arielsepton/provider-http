@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	v1alpha1_desposible "github.com/crossplane-contrib/provider-http/apis/desposiblerequest/v1alpha1"
+	v1alpha1_disposible "github.com/crossplane-contrib/provider-http/apis/disposiblerequest/v1alpha1"
 	v1alpha1_request "github.com/crossplane-contrib/provider-http/apis/request/v1alpha1"
 	httpClient "github.com/crossplane-contrib/provider-http/internal/clients/http"
 	"github.com/pkg/errors"
@@ -42,20 +42,20 @@ var (
 )
 
 var (
-	testDesposibleForProvider = v1alpha1_desposible.DesposibleRequestParameters{
+	testDisposibleForProvider = v1alpha1_disposible.DisposibleRequestParameters{
 		Body:   "{\"key1\": \"value1\"}",
 		URL:    "http://example",
 		Method: "GET",
 	}
 
-	testDesposibleCr = &v1alpha1_desposible.DesposibleRequest{
-		Spec: v1alpha1_desposible.DesposibleRequestSpec{
-			ForProvider: testDesposibleForProvider,
+	testDisposibleCr = &v1alpha1_disposible.DisposibleRequest{
+		Spec: v1alpha1_disposible.DisposibleRequestSpec{
+			ForProvider: testDisposibleForProvider,
 		},
 	}
 
-	testDesposibleResource = RequestResource{
-		Resource:       testDesposibleCr,
+	testDisposibleResource = RequestResource{
+		Resource:       testDisposibleCr,
 		RequestContext: context.Background(),
 		HttpResponse: httpClient.HttpResponse{
 			StatusCode: 200,
@@ -202,7 +202,7 @@ func Test_SetRequestResourceStatus(t *testing.T) {
 	}
 }
 
-func Test_DesposibleRequest_SetRequestResourceStatus(t *testing.T) {
+func Test_DisposibleRequest_SetRequestResourceStatus(t *testing.T) {
 	type args struct {
 		rr          RequestResource
 		statusFuncs []SetRequestStatusFunc
@@ -217,12 +217,12 @@ func Test_DesposibleRequest_SetRequestResourceStatus(t *testing.T) {
 	}{
 		"Success": {
 			args: args{
-				rr: testDesposibleResource,
+				rr: testDisposibleResource,
 				statusFuncs: []SetRequestStatusFunc{
-					testDesposibleResource.SetBody(),
-					testDesposibleResource.SetHeaders(),
-					testDesposibleResource.SetStatusCode(),
-					testDesposibleResource.SetSynced(),
+					testDisposibleResource.SetBody(),
+					testDisposibleResource.SetHeaders(),
+					testDisposibleResource.SetStatusCode(),
+					testDisposibleResource.SetSynced(),
 				},
 			},
 			want: want{
@@ -232,12 +232,12 @@ func Test_DesposibleRequest_SetRequestResourceStatus(t *testing.T) {
 		},
 		"SetError": {
 			args: args{
-				rr: testDesposibleResource,
+				rr: testDisposibleResource,
 				statusFuncs: []SetRequestStatusFunc{
-					testDesposibleResource.SetError(errBoom),
-					testDesposibleResource.SetBody(),
-					testDesposibleResource.SetHeaders(),
-					testDesposibleResource.SetStatusCode(),
+					testDisposibleResource.SetError(errBoom),
+					testDisposibleResource.SetBody(),
+					testDisposibleResource.SetHeaders(),
+					testDisposibleResource.SetStatusCode(),
 				},
 			},
 			want: want{
@@ -253,23 +253,23 @@ func Test_DesposibleRequest_SetRequestResourceStatus(t *testing.T) {
 				t.Fatalf("SetRequestResourceStatus(...): -want error, +got error: %s", diff)
 			}
 
-			if diff := cmp.Diff(tc.args.rr.HttpResponse.Body, testDesposibleCr.Status.Response.Body); diff != "" {
+			if diff := cmp.Diff(tc.args.rr.HttpResponse.Body, testDisposibleCr.Status.Response.Body); diff != "" {
 				t.Fatalf("SetRequestResourceStatus(...): -want response body, +got response body: %s", diff)
 			}
 
-			if diff := cmp.Diff(tc.args.rr.HttpResponse.Headers, testDesposibleCr.Status.Response.Headers); diff != "" {
+			if diff := cmp.Diff(tc.args.rr.HttpResponse.Headers, testDisposibleCr.Status.Response.Headers); diff != "" {
 				t.Fatalf("SetRequestResourceStatus(...): -want response headers, +got response headers: %s", diff)
 			}
 
-			if diff := cmp.Diff(tc.args.rr.HttpResponse.StatusCode, testDesposibleCr.Status.Response.StatusCode); diff != "" {
+			if diff := cmp.Diff(tc.args.rr.HttpResponse.StatusCode, testDisposibleCr.Status.Response.StatusCode); diff != "" {
 				t.Fatalf("SetRequestResourceStatus(...): -want response status code, +got response status code: %s", diff)
 			}
 
-			if diff := cmp.Diff(true, testDesposibleCr.Status.Synced); diff != "" {
+			if diff := cmp.Diff(true, testDisposibleCr.Status.Synced); diff != "" {
 				t.Fatalf("SetRequestResourceStatus(...): -want synced, +got synced: %s", diff)
 			}
 
-			if diff := cmp.Diff(tc.want.failures, testDesposibleCr.Status.Failed); diff != "" {
+			if diff := cmp.Diff(tc.want.failures, testDisposibleCr.Status.Failed); diff != "" {
 				t.Fatalf("SetRequestResourceStatus(...): -want failures, +got failures: %s", diff)
 			}
 		})
