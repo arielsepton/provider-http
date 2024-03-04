@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package disposiblerequest contains group request API versions
-package disposiblerequest
+// Package disposablerequest contains group request API versions
+package disposablerequest
