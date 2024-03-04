@@ -1,7 +1,7 @@
 apiVersion: http.crossplane.io/v1alpha1
 kind: ProviderConfig
 metadata:
-  name: http-conf
+  name: default
 spec:
   credentials:
     source: InjectedIdentity
