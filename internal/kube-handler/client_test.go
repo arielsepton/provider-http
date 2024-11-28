@@ -19,11 +19,13 @@ var (
 	errBoom = errors.New("boom")
 )
 
-func createSpecificSecret(name, namespace, key, value string) *corev1.Secret {
+func createSpecificSecret(name, namespace, key, value string, labels, annotations map[string]string) *corev1.Secret {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 	}
 
@@ -60,7 +62,7 @@ func Test_GetSecret(t *testing.T) {
 							return errors.New("object is not a Secret")
 						}
 
-						*secret = *createSpecificSecret("specific-secret-name", "specific-secret-namespace", "specific-key", "specific-value")
+						*secret = *createSpecificSecret("specific-secret-name", "specific-secret-namespace", "specific-key", "specific-value", nil, nil)
 						return nil
 					},
 				},
@@ -133,7 +135,7 @@ func Test_GetOrCreateSecret(t *testing.T) {
 							return errors.New("object is not a Secret")
 						}
 
-						*secret = *createSpecificSecret("specific-secret-name", "specific-secret-namespace", "specific-key", "specific-value")
+						*secret = *createSpecificSecret("specific-secret-name", "specific-secret-namespace", "specific-key", "specific-value", nil, nil)
 						return nil
 					},
 				},
@@ -162,7 +164,7 @@ func Test_GetOrCreateSecret(t *testing.T) {
 							return errors.New("object is not a Secret")
 						}
 
-						*secret = *createSpecificSecret("new-secret-name", "new-secret-namespace", "new-key", "new-value")
+						*secret = *createSpecificSecret("new-secret-name", "new-secret-namespace", "new-key", "new-value", nil, nil)
 						return nil
 					},
 					MockCreate: func(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
@@ -171,7 +173,7 @@ func Test_GetOrCreateSecret(t *testing.T) {
 							return errors.New("object is not a Secret")
 						}
 
-						*secret = *createSpecificSecret("new-secret-name", "new-secret-namespace", "new-key", "new-value")
+						*secret = *createSpecificSecret("new-secret-name", "new-secret-namespace", "new-key", "new-value", nil, nil)
 						return nil
 					},
 				},
@@ -210,7 +212,7 @@ func Test_GetOrCreateSecret(t *testing.T) {
 		tc := tc // Create local copies of loop variables
 
 		t.Run(name, func(t *testing.T) {
-			got, gotErr := GetOrCreateSecret(context.Background(), tc.args.localKube, tc.args.name, tc.args.namespace, nil)
+			got, gotErr := GetOrCreateSecret(context.Background(), tc.args.localKube, tc.args.name, tc.args.namespace, nil, map[string]string{}, map[string]string{})
 			if diff := cmp.Diff(tc.want.err, gotErr, test.EquateErrors()); diff != "" {
 				t.Fatalf("GetOrCreateSecret(...): -want error, +got error: %s", diff)
 			}
@@ -241,7 +243,7 @@ func Test_UpdateSecret(t *testing.T) {
 						return nil
 					},
 				},
-				secret: createSpecificSecret("update-secret-name", "update-secret-namespace", "update-key", "update-value"),
+				secret: createSpecificSecret("update-secret-name", "update-secret-namespace", "update-key", "update-value", nil, nil),
 			},
 			want: want{
 				err: nil,
@@ -252,7 +254,7 @@ func Test_UpdateSecret(t *testing.T) {
 				localKube: &test.MockClient{
 					MockUpdate: test.NewMockUpdateFn(errBoom),
 				},
-				secret: createSpecificSecret("update-secret-name", "update-secret-namespace", "update-key", "update-value"),
+				secret: createSpecificSecret("update-secret-name", "update-secret-namespace", "update-key", "update-value", nil, nil),
 			},
 			want: want{
 				err: errorspkg.Wrap(errBoom, errUpdateFailed),
@@ -299,7 +301,7 @@ func Test_createSecret(t *testing.T) {
 				owner:     nil,
 			},
 			want: want{
-				result: createSpecificSecret("new-secret-name", "new-secret-namespace", "", ""),
+				result: createSpecificSecret("new-secret-name", "new-secret-namespace", "", "", nil, nil),
 				err:    nil,
 			},
 		},
@@ -322,7 +324,7 @@ func Test_createSecret(t *testing.T) {
 		tc := tc // Create local copies of loop variables
 
 		t.Run(name, func(t *testing.T) {
-			got, gotErr := createSecret(context.Background(), tc.args.localKube, tc.args.name, tc.args.namespace, tc.args.owner)
+			got, gotErr := createSecret(context.Background(), tc.args.localKube, tc.args.name, tc.args.namespace, tc.args.owner, nil, nil)
 			if diff := cmp.Diff(tc.want.err, gotErr, test.EquateErrors()); diff != "" {
 				t.Fatalf("createSecret(...): -want error, +got error: %s", diff)
 			}
@@ -420,7 +422,7 @@ func Test_GetOrCreateSecret_EmptyName(t *testing.T) {
 		MockGet: test.NewMockGetFn(errBoom),
 	}
 	// Pass an empty secret name
-	_, err := GetOrCreateSecret(context.Background(), kubeClient, "", "some-namespace", nil)
+	_, err := GetOrCreateSecret(context.Background(), kubeClient, "", "some-namespace", nil, map[string]string{}, map[string]string{})
 
 	// Verify that an error is returned for an empty secret name
 	if err == nil || !strings.Contains(err.Error(), fmt.Sprintf(errGetSecret, "", "some-namespace")) {

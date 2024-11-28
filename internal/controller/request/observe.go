@@ -2,6 +2,7 @@ package request
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/crossplane-contrib/provider-http/apis/request/v1alpha2"
@@ -9,6 +10,7 @@ import (
 	"github.com/crossplane-contrib/provider-http/internal/controller/request/observe"
 	"github.com/crossplane-contrib/provider-http/internal/controller/request/requestgen"
 	"github.com/crossplane-contrib/provider-http/internal/controller/request/requestmapping"
+	datapatcher "github.com/crossplane-contrib/provider-http/internal/data-patcher"
 	"github.com/crossplane-contrib/provider-http/internal/utils"
 	"github.com/pkg/errors"
 )
@@ -64,7 +66,8 @@ func (c *external) isUpToDate(ctx context.Context, cr *v1alpha2.Request) (Observ
 		return FailedObserve(), err
 	}
 
-	c.patchResponseToSecret(ctx, cr, &details.HttpResponse)
+	datapatcher.PatchResponseValuesToSecrets(ctx, c.localKube, c.logger, &details.HttpResponse, cr, cr.Spec.ForProvider.SecretInjectionConfigs)
+	fmt.Sprintln("now checking if up to date")
 	return c.determineIfUpToDate(ctx, cr, details, responseErr)
 }
 

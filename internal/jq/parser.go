@@ -19,6 +19,7 @@ const (
 
 var mutex = &sync.Mutex{}
 
+// runJQQuery runs a jq query on the given object and returns the result.
 func runJQQuery(jqQuery string, obj interface{}) (interface{}, error) {
 	query, err := gojq.Parse(jqQuery)
 	if err != nil {
@@ -41,6 +42,7 @@ func runJQQuery(jqQuery string, obj interface{}) (interface{}, error) {
 	return queryRes, nil
 }
 
+// ParseString parses a string from the given object using the jq query.
 func ParseString(jqQuery string, obj interface{}) (string, error) {
 	queryRes, err := runJQQuery(jqQuery, obj)
 	if err != nil {
@@ -69,6 +71,7 @@ func ParseBool(jqQuery string, obj interface{}) (bool, error) {
 	return boolean, nil
 }
 
+// ParseMapInterface parses a map from the given object using the jq query.
 func ParseMapInterface(jqQuery string, obj interface{}) (map[string]interface{}, error) {
 	queryRes, err := runJQQuery(jqQuery, obj)
 	if err != nil {
@@ -88,6 +91,7 @@ func ParseMapInterface(jqQuery string, obj interface{}) (map[string]interface{},
 	return nil, errors.Errorf(errMapParseFailed, fmt.Sprint(queryRes))
 }
 
+// ParseMapStrings parses a map of strings from the given object using the jq queries.
 func ParseMapStrings(keyToJQQueries map[string][]string, obj interface{}) (map[string][]string, error) {
 	result := make(map[string][]string, len(keyToJQQueries))
 

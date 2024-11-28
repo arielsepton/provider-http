@@ -37,11 +37,11 @@ func GetSecret(ctx context.Context, kubeClient client.Client, name string, names
 
 // GetOrCreateSecret retrieves a Kubernetes Secret from the cluster. If the secret does not exist, it creates a new one.
 // If the secret exists but has no owner reference, it sets the owner reference and updates the secret.
-func GetOrCreateSecret(ctx context.Context, kubeClient client.Client, name, namespace string, owner metav1.Object) (*corev1.Secret, error) {
+func GetOrCreateSecret(ctx context.Context, kubeClient client.Client, name, namespace string, owner metav1.Object, labels, annotations map[string]string) (*corev1.Secret, error) {
 	secret, err := GetSecret(ctx, kubeClient, name, namespace)
 	if err != nil {
 		if errs.IsNotFound(err) {
-			return createSecret(ctx, kubeClient, name, namespace, owner)
+			return createSecret(ctx, kubeClient, name, namespace, owner, labels, annotations)
 		}
 		return nil, err
 	}
@@ -70,11 +70,13 @@ func UpdateSecret(ctx context.Context, kubeClient client.Client, secret *corev1.
 }
 
 // createSecret creates a new Kubernetes Secret in the cluster.
-func createSecret(ctx context.Context, kubeClient client.Client, name, namespace string, owner metav1.Object) (*corev1.Secret, error) {
+func createSecret(ctx context.Context, kubeClient client.Client, name, namespace string, owner metav1.Object, labels, annotations map[string]string) (*corev1.Secret, error) {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      name,
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 	}
 
@@ -90,6 +92,48 @@ func createSecret(ctx context.Context, kubeClient client.Client, name, namespace
 	}
 
 	return secret, nil
+}
+
+// UpdateMetadata updates the labels and annotations of a Kubernetes Secret.
+// It ensures that any label or annotation not present in the provided maps is removed from the Secret.
+func UpdateMetadata(secret *corev1.Secret, labels, annotations map[string]string) bool {
+	updated := false
+
+	// Handle labels
+	if secret.Labels == nil && len(labels) > 0 {
+		secret.Labels = make(map[string]string)
+	}
+	for key := range secret.Labels {
+		if _, exists := labels[key]; !exists {
+			delete(secret.Labels, key)
+			updated = true
+		}
+	}
+	for key, value := range labels {
+		if secret.Labels[key] != value {
+			secret.Labels[key] = value
+			updated = true
+		}
+	}
+
+	// Handle annotations
+	if secret.Annotations == nil && len(annotations) > 0 {
+		secret.Annotations = make(map[string]string)
+	}
+	for key := range secret.Annotations {
+		if _, exists := annotations[key]; !exists {
+			delete(secret.Annotations, key)
+			updated = true
+		}
+	}
+	for key, value := range annotations {
+		if secret.Annotations[key] != value {
+			secret.Annotations[key] = value
+			updated = true
+		}
+	}
+
+	return updated
 }
 
 // hasOwnerReference checks if the given secret has the specified owner reference.

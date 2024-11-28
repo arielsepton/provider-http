@@ -43,7 +43,6 @@ import (
 	"github.com/crossplane-contrib/provider-http/internal/controller/request/statushandler"
 	datapatcher "github.com/crossplane-contrib/provider-http/internal/data-patcher"
 	"github.com/crossplane-contrib/provider-http/internal/utils"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -59,6 +58,11 @@ const (
 	errGetLatestVersion             = "failed to get the latest version of the resource"
 	errExtractCredentials           = "cannot extract credentials"
 )
+
+type response struct {
+	sensitiveResponse interface{}
+	encryptedResponse interface{}
+}
 
 // Setup adds a controller that reconciles Request managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options, timeout time.Duration) error {
@@ -204,13 +208,19 @@ func (c *external) deployAction(ctx context.Context, cr *v1alpha2.Request, actio
 	}
 
 	details, err := c.http.SendRequest(ctx, mapping.Method, requestDetails.Url, requestDetails.Body, requestDetails.Headers, cr.Spec.ForProvider.InsecureSkipTLSVerify)
-	c.patchResponseToSecret(ctx, cr, &details.HttpResponse)
+	if mapping.Method == "DELETE" {
+		fmt.Println("ok request sent")
+	}
+
+	datapatcher.PatchResponseValuesToSecrets(ctx, c.localKube, c.logger, &details.HttpResponse, cr, cr.Spec.ForProvider.SecretInjectionConfigs)
+	fmt.Println("after patch")
 
 	statusHandler, err := statushandler.NewStatusHandler(ctx, cr, details, err, c.localKube, c.logger)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("setting status")
 	return statusHandler.SetRequestStatus()
 }
 
@@ -239,20 +249,4 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 
 	return errors.Wrap(c.deployAction(ctx, cr, v1alpha2.ActionRemove), errFailedToSendHttpRequest)
-}
-
-// patchResponseToSecret patches the response data to the secret based on the given Request resource and Mapping configuration.
-func (c *external) patchResponseToSecret(ctx context.Context, cr *v1alpha2.Request, response *httpClient.HttpResponse) {
-	for _, ref := range cr.Spec.ForProvider.SecretInjectionConfigs {
-		var owner metav1.Object = nil
-
-		if ref.SetOwnerReference {
-			owner = cr
-		}
-
-		err := datapatcher.PatchResponseToSecret(ctx, c.localKube, c.logger, response, ref.ResponsePath, ref.SecretKey, ref.SecretRef.Name, ref.SecretRef.Namespace, owner)
-		if err != nil {
-			c.logger.Info(fmt.Sprintf(errPatchDataToSecret, ref.SecretRef.Name, ref.SecretRef.Namespace, ref.SecretKey, err.Error()))
-		}
-	}
 }

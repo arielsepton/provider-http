@@ -13,7 +13,7 @@ spec:
       Authorization:
         - ("Bearer {{ auth:default:token }}")
     payload:
-      baseUrl: http://flask-api.default.svc.cluster.local/v1/users
+      baseUrl: http://127.0.0.1:9000/v1/users
       body: |
         {
           "username": "mock_user", 
@@ -87,6 +87,7 @@ spec:
       logic: |
         if .response.statusCode == 404
           and .response.body.error == "User not found"
+          and .response.headers."X-Secret-Header"[0] == "{{ response-secret:default:extracted-header-data }}"
           then true 
           else false 
           end
@@ -96,21 +97,27 @@ spec:
       - secretRef:
           name: response-secret
           namespace: default
-        secretKey: extracted-user-email
-        responsePath: .body.email
+        keyMappings:
+          - secretKey: extracted-user-email
+            responsePath: .body.email     
+          - secretKey: extracted-header-data
+            responsePath: .headers."X-Secret-Header"[0]
+        # metadata: 
+        #   labels:
+        #     key1: ("{{ auth:default:token }}")
+        #     key2: .body.username
+        #   annotations:
+        #     key1: "value1"
+        #     key2: ("value2")
         # setOwnerReference determines if the secret should be deleted when the associated resource is deleted.
-        # When injecting multiple keys into the same secret, ensure this field is set consistently for all keys.        
         setOwnerReference: true
-      - secretRef:
-          name: response-secret
-          namespace: default
-        secretKey: extracted-header-data
-        responsePath: .headers."X-Secret-Header"[0]
-        setOwnerReference: true
+      
       - secretRef:
           name: response-user-password
           namespace: default
-        secretKey: extracted-user-password
-        responsePath: .body.password
+        keyMappings:
+          - secretKey: extracted-user-password
+            responsePath: .body.password
+
   providerConfigRef:
     name: http-conf

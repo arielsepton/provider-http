@@ -2,6 +2,7 @@ package observe
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/crossplane-contrib/provider-http/apis/request/v1alpha2"
@@ -12,7 +13,8 @@ import (
 )
 
 const (
-	ErrObjectNotFound = "object wasn't found"
+	ErrObjectNotFound  = "object wasn't found"
+	errCheckingRemoved = "error occurred while checking if object is removed: %s"
 )
 
 // isDeletedCheck is an interface for performing isDeleted checks.
@@ -50,13 +52,26 @@ func (c *customIsRemovedResponseCheck) Check(ctx context.Context, cr *v1alpha2.R
 
 	isRemoved, err := customCheck.check(ctx, cr, details, logic)
 	if err != nil {
-		return errors.Errorf(errExpectedFormat, "isRemovedCheck", err.Error())
+		c.logger.Info(fmt.Sprintf(errCheckingRemoved, fmt.Sprintf(errExpectedFormat, "isRemovedCheck", err.Error())))
+		return errors.Errorf(errCheckingRemoved, fmt.Sprintf(errExpectedFormat, "isRemovedCheck", err.Error()))
 	} else if isRemoved {
 		return errors.New(ErrObjectNotFound)
 	}
 
 	return nil
 }
+
+// func (c *customIsUpToDateResponseCheck) Check(ctx context.Context, cr *v1alpha2.Request, details httpClient.HttpDetails, responseErr error) (bool, error) {
+// 	logic := cr.Spec.ForProvider.ExpectedResponseCheck.Logic
+// 	customCheck := &customCheck{localKube: c.localKube, logger: c.logger, http: c.http}
+
+// 	isUpToDate, err := customCheck.check(ctx, cr, details, logic)
+// 	if err != nil {
+// 		return false, errors.Errorf(errExpectedFormat, "expectedResponseCheck", err.Error())
+// 	}
+
+// 	return isUpToDate, nil
+// }
 
 // isRemovedCheckFactoryMap is a map that associates each check type with its corresponding factory function.
 var isRemovedCheckFactoryMap = map[string]func(localKube client.Client, logger logging.Logger, http httpClient.Client) isDeletedCheck{
