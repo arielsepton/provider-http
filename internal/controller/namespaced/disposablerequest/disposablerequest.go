@@ -289,31 +289,40 @@ func (c *external) Disconnect(_ context.Context) error {
 
 // WithCustomPollIntervalHook returns a managed.ReconcilerOption that sets a custom poll interval based on the DisposableRequest spec.
 func WithCustomPollIntervalHook() managed.ReconcilerOption {
-	return managed.WithPollIntervalHook(func(mg resource.Managed, pollInterval time.Duration) time.Duration {
-		defaultPollInterval := 30 * time.Second
+	return managed.WithPollIntervalHook(customPollIntervalHook)
+}
 
-		cr, ok := mg.(*v1alpha2.DisposableRequest)
-		if !ok {
-			return defaultPollInterval
-		}
+// customPollIntervalHook computes the duration until the next reconcile based on the
+// DisposableRequest's spec and status. If LastReconcileTime is zero (not yet observed),
+// treat it as now to avoid premature short-interval requeues.
+func customPollIntervalHook(mg resource.Managed, _ time.Duration) time.Duration {
+	defaultPollInterval := 30 * time.Second
 
-		if cr.Spec.ForProvider.NextReconcile == nil {
-			return defaultPollInterval
-		}
-
-		// Calculate next reconcile time based on NextReconcile duration
-		nextReconcileDuration := cr.Spec.ForProvider.NextReconcile.Duration
-		lastReconcileTime := cr.Status.LastReconcileTime.Time
-		nextReconcileTime := lastReconcileTime.Add(nextReconcileDuration)
-
-		// Determine if the current time is past the next reconcile time
-		now := time.Now()
-		if now.Before(nextReconcileTime) {
-			// If not yet time to reconcile, calculate remaining time
-			return nextReconcileTime.Sub(now)
-		}
-
-		// Default poll interval if the next reconcile time is in the past
+	cr, ok := mg.(*v1alpha2.DisposableRequest)
+	if !ok {
 		return defaultPollInterval
-	})
+	}
+
+	if cr.Spec.ForProvider.NextReconcile == nil {
+		return defaultPollInterval
+	}
+
+	// Calculate next reconcile time based on NextReconcile duration
+	nextReconcileDuration := cr.Spec.ForProvider.NextReconcile.Duration
+	lastReconcileTime := cr.Status.LastReconcileTime.Time
+	if lastReconcileTime.IsZero() {
+		// Status update may not have propagated yet; consider last reconcile as now.
+		lastReconcileTime = time.Now()
+	}
+	nextReconcileTime := lastReconcileTime.Add(nextReconcileDuration)
+
+	// Determine if the current time is past the next reconcile time
+	now := time.Now()
+	if now.Before(nextReconcileTime) {
+		// If not yet time to reconcile, calculate remaining time
+		return nextReconcileTime.Sub(now)
+	}
+
+	// Default poll interval if the next reconcile time is in the past
+	return defaultPollInterval
 }
